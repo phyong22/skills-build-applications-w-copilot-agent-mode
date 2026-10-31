@@ -30,20 +30,22 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 Record your plan here before editing code.
 
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Keep route-specific rendering and interaction in React components, use the shared API client for requests, and expose loading, empty, and error states accessibly. Keep persistence and domain calculations out of the UI.
+- Logic tier decision: Keep HTTP parsing, validation, status codes, and response envelopes in Express routes; delegate domain operations to `octofitService`. Return deliberate 4xx responses for invalid or missing resources.
+- Data tier decision: Express relationships and required values in Mongoose schemas, default collection-like fields such as team members to empty arrays, and keep seeding repeatable without deleting unrelated records.
+- Activity tracking approach: Validate ID shape and that the referenced user and team exist before saving. Persist the submitted user, team, type, and minutes, and compute points and `occurredAt` on the server.
+- Team management approach: Reject a missing team name with `400`, preserve submitted names and mascots, and store member references with an empty-array default.
+- Leaderboard approach: Sum activity points by team, sort from highest total to lowest, and assign each returned entry a 1-based rank.
+- Workout suggestions approach: Find the user by email, select suggestions aligned with their fitness goal or recent activity, include a reason for the leading suggestion, and return a deliberate 4xx when no user matches.
 
 ## Test plan
 
 Record the commands you run and what each failure means.
 
-- Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
-- API command: `npm run test:api --prefix octofit-tracker/backend`
-- Frontend command: `npm test --prefix octofit-tracker/frontend`
-- Backend build command: `npm run build --prefix octofit-tracker/backend`
-- Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+- Data tier: `npm run test:data --prefix octofit-tracker/backend` checks required model fields, defaults, references, and repeatable seed behavior. Failures point to schemas or seed logic.
+- API: `npm run test:api --prefix octofit-tracker/backend` checks request validation, persistence, response shapes, leaderboard ordering, and workout recommendations. Failures point to route or service behavior, or its data-tier dependencies.
+- Frontend: `npm test --prefix octofit-tracker/frontend` checks API-backed rendering, user-specific requests, and accessible loading, empty, and error states. Failures point to the API client or presentation components.
+- Backend build: `npm run build --prefix octofit-tracker/backend` type-checks backend code; failures indicate TypeScript or backend contract mismatches.
+- Frontend build: `npm run build --prefix octofit-tracker/frontend` type-checks and bundles the UI; failures indicate TypeScript, module, or Vite build issues.
+
+Baseline from the initial test run: the backend suite had 8 failures and 1 pass (the seed idempotency test); the frontend suite had 15 failures. Run the focused commands above to localize these failures before proceeding to builds.
